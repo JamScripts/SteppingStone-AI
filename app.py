@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from google import genai
 from datetime import date
+from milestones import format_milestones_for_prompt
 
 # --- 1. BRANDING & PAGE CONFIG ---
 st.set_page_config(page_title="SteppingStone AI", page_icon="🧩", layout="centered")
@@ -54,11 +55,15 @@ if st.button("Analyze Milestones & Find Gifts"):
     if not client:
         st.warning("Agent brain is offline. Set API Key in Railway.")
     else:
+        milestone_context = format_milestones_for_prompt(months)
         prompt_text = f"""
         You are SteppingStone AI, an expert in child development and clean-swap toy curation.
         The child is {months} months old. 
         
-        1. List 2-3 specific developmental milestones for a {months}-month-old.
+        Use this CDC milestone context when tailoring the response:
+        {milestone_context}
+        
+        1. List 2-3 specific developmental milestones for a {months}-month-old using the CDC context above.
         2. Suggest 3 'Stepping Stone' gifts that help them reach the NEXT milestone.
         3. Focus on high-quality, non-toxic, or wooden brands.
         4. Provide Amazon search links with tag={AMAZON_ID}.
