@@ -7,7 +7,7 @@ from milestones import format_milestones_for_prompt, get_relevant_cdc_milestones
 
 
 # --- 1. BRANDING & PAGE CONFIG ---
-st.set_page_config(page_title="SteppingStone AI", page_icon="🧩", layout="centered")
+st.set_page_config(page_title="Nurture", page_icon="🧩", layout="centered")
 
 
 # --- 2. SECURE KEY & ID FETCH ---
@@ -90,22 +90,28 @@ def build_required_milestone_context(age_months):
     return "\n".join(f"- {milestone}" for milestone in required_phrases)
 
 
+def get_nurture_progress():
+    checked_count = 0
+    total_count = sum(len(milestones) for milestones in NURTURE_WEEKLY_MILESTONES.values())
+
+    for category, milestones in NURTURE_WEEKLY_MILESTONES.items():
+        for milestone in milestones:
+            key = f"nurture_{category}_{milestone}"
+            if st.session_state.get(key):
+                checked_count += 1
+
+    return checked_count, total_count
+
+
 def render_nurture_milestones(age_months, container):
     container.header("Nurture Milestones")
     container.caption(f"Weekly growth tracker for {age_months} months")
-
-    checked_count = 0
-    total_count = sum(len(milestones) for milestones in NURTURE_WEEKLY_MILESTONES.values())
 
     for category, milestones in NURTURE_WEEKLY_MILESTONES.items():
         container.subheader(category)
         for milestone in milestones:
             key = f"nurture_{category}_{milestone}"
-            if container.checkbox(milestone, key=key):
-                checked_count += 1
-
-    container.progress(checked_count / total_count if total_count else 0)
-    container.caption(f"{checked_count} of {total_count} seen today")
+            container.checkbox(milestone, key=key)
 
 
 def render_safe_materials_guide():
@@ -125,8 +131,10 @@ def render_safe_materials_guide():
     )
 
 
-GLASSMORPHISM_CSS = """
+NURTURE_THEME_CSS = """
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Quicksand:wght@600;700&display=swap');
+
     #MainMenu,
     footer,
     [data-testid="stToolbar"],
@@ -137,29 +145,89 @@ GLASSMORPHISM_CSS = """
 
     .stApp {
         background:
-            radial-gradient(circle at top left, rgba(132, 204, 197, 0.28), transparent 34rem),
-            radial-gradient(circle at bottom right, rgba(245, 158, 123, 0.22), transparent 32rem),
-            linear-gradient(135deg, #f8fbfa 0%, #eef7f5 45%, #fff7f0 100%);
+            radial-gradient(circle at top left, rgba(135, 206, 235, 0.24), transparent 34rem),
+            radial-gradient(circle at bottom right, rgba(244, 151, 173, 0.2), transparent 32rem),
+            linear-gradient(135deg, #f8fbfa 0%, #eef8fb 45%, #fff6f8 100%);
+    }
+
+    .stApp,
+    .stMarkdown,
+    [data-testid="stWidgetLabel"],
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricValue"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    h1,
+    h2,
+    h3,
+    .nurture-title {
+        font-family: 'Quicksand', sans-serif !important;
+        color: #87CEEB !important;
+        letter-spacing: 0;
+    }
+
+    .nurture-title {
+        margin: 0 0 0.2rem;
+        font-size: 3rem;
+        line-height: 1.05;
+        font-weight: 700;
+    }
+
+    .section-kicker {
+        margin-bottom: 1.5rem;
+        color: #4b6268;
+        font-size: 1.02rem;
+    }
+
+    .stButton > button {
+        width: 100%;
+        border: 0;
+        border-radius: 8px;
+        background: #F497AD;
+        color: #ffffff;
+        font-family: 'Quicksand', sans-serif;
+        font-weight: 700;
+        box-shadow: 0 12px 28px rgba(244, 151, 173, 0.28);
+        transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .stButton > button:hover {
+        background: #ef819d;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 16px 34px rgba(244, 151, 173, 0.34);
+    }
+
+    .stProgress > div > div > div > div {
+        background-color: #F497AD;
     }
 
     .product-recommendation-card {
         margin: 1rem 0;
         padding: 1.15rem 1.25rem;
         background: rgba(255, 255, 255, 0.62);
-        border: 1px solid rgba(255, 255, 255, 0.72);
+        border: 2px solid #87CEEB;
         border-radius: 8px;
         box-shadow: 0 18px 42px rgba(70, 97, 88, 0.14);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .product-recommendation-card:hover {
+        transform: translateY(-4px);
+        border-color: #64bfdf;
+        box-shadow: 0 24px 54px rgba(70, 97, 88, 0.2);
     }
 
     .product-recommendation-card h3 {
         margin-top: 0;
-        color: #24433c;
+        color: #87CEEB;
     }
 
     .product-recommendation-card a {
-        color: #1d7f72;
+        color: #F497AD;
         font-weight: 700;
     }
 </style>
@@ -167,26 +235,23 @@ GLASSMORPHISM_CSS = """
 
 
 # --- 4. USER INTERFACE (UI) ---
-st.markdown(GLASSMORPHISM_CSS, unsafe_allow_html=True)
-st.title("🧩 SteppingStone AI")
-st.subheader("Your Personal Developmental Gift Scout")
+st.markdown(NURTURE_THEME_CSS, unsafe_allow_html=True)
+st.markdown('<h1 class="nurture-title"><strong>🧩 Nurture</strong></h1>', unsafe_allow_html=True)
+st.markdown('<p class="section-kicker">Your personal developmental gift scout.</p>', unsafe_allow_html=True)
 
 with st.sidebar:
     render_safe_materials_guide()
 
-st.header("Child's Profile")
-profile_columns = st.columns([2, 1])
-with profile_columns[0]:
-    dob = st.date_input("Birth Date", value=date(2024, 11, 1))
-months = calculate_months(dob)
-with profile_columns[1]:
-    st.metric(label="Age in Months", value=f"{months}m")
+if "child_birth_date" not in st.session_state:
+    st.session_state.child_birth_date = date(2024, 11, 1)
 
-with st.expander("Nurture Milestones", expanded=False):
-    render_nurture_milestones(months, st)
+months = calculate_months(st.session_state.child_birth_date)
 
 
-# --- 5. AGENT LOGIC ---
+# --- 5. AMAZON GIFT RECOMMENDATIONS ---
+st.header("Amazon Gift Recommendations")
+st.caption("CDC-informed gift ideas for the next developmental step.")
+
 if st.button("Analyze Milestones & Find Gifts"):
     if not client:
         st.warning(
@@ -197,7 +262,7 @@ if st.button("Analyze Milestones & Find Gifts"):
         milestone_context = format_milestones_for_prompt(months)
         required_milestones = build_required_milestone_context(months)
         prompt_text = f"""
-        You are SteppingStone AI, an expert in child development and clean-swap toy curation.
+        You are Nurture, an expert in child development and clean-swap toy curation.
         The child is {months} months old.
 
         Use this CDC milestone context as the source of truth. Mention the relevant CDC
@@ -215,9 +280,11 @@ if st.button("Analyze Milestones & Find Gifts"):
         4. Provide Amazon search links with tag={AMAZON_ID}.
         5. Format each of the 3 product recommendations as its own HTML card:
            <div class="product-recommendation-card">...</div>
+        6. Inside each product card, include a "Why it Matters" section that explicitly names one
+           CDC milestone from the context above and explains how the toy supports that milestone.
         """
 
-        with st.spinner("SteppingStone AI is analyzing developmental data..."):
+        with st.spinner("Nurture is analyzing developmental data..."):
             last_error = None
             for model in ("gemini-2.5-flash", "gemini-2.0-flash"):
                 try:
@@ -233,4 +300,26 @@ if st.button("Analyze Milestones & Find Gifts"):
                 st.error(f"Agent Error: {last_error}")
 
 st.divider()
-st.caption("SteppingStone AI | Building foundations through play.")
+
+
+# --- 6. CHILD PROFILE & MILESTONES ---
+st.header("Child's Profile")
+profile_columns = st.columns([2, 1])
+with profile_columns[0]:
+    st.date_input("Birth Date", key="child_birth_date")
+months = calculate_months(st.session_state.child_birth_date)
+with profile_columns[1]:
+    st.metric(label="Age in Months", value=f"{months}m")
+
+with st.expander("Nurture Milestones", expanded=False):
+    render_nurture_milestones(months, st)
+
+st.divider()
+
+
+# --- 7. DEVELOPMENTAL PROGRESS ---
+st.header("Developmental Progress")
+checked_count, total_count = get_nurture_progress()
+st.progress(checked_count / total_count if total_count else 0)
+st.caption(f"{checked_count} of {total_count} milestones seen today")
+st.caption("Nurture | Building foundations through play.")
